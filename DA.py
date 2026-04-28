@@ -11,7 +11,8 @@ if 'camera_attiva' not in st.session_state:
 
 # --- SIDEBAR PER API KEY ---
 with st.sidebar:
-    api_key = st.secrets("Gemini API Key", type="password")
+    api_key = st.secrets.get("API_KEY", "")
+
     if api_key:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
