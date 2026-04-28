@@ -104,23 +104,42 @@ else:
             
             if st.button("🚀 CALCOLA BOLO", use_container_width=True):
                 if not api_key:
-                    st.error("Manca l'API Key nella sidebar!")
+                    st.error("Inserisci l'API Key nella barra laterale!")
+                elif input_finale is None:
+                    st.warning("Per favore, scatta una foto o carica un'immagine prima di procedere.")
                 else:
                     with st.spinner("Analisi nutrizionale in corso..."):
-                        prompt = f"""
-                        Analizza questa foto per un paziente diabetico (Rapporto IC: {u['ic']}).
-                        1. Controlla qualità foto. Se pessima scrivi 'QUALITA_KO'.
-                        2. Identifica carboidrati (CHO).
-                        3. Restituisci una tabella Alimento | Peso stimato | CHO.
-                        4. Indica il totale CHO e suggerisci il bolo (Totale CHO / {u['ic']}).
-                        5. Sii sintetico e usa il grassetto per i numeri.
-                        """
-                        response = model.generate_content([prompt, image])
-                        
-                        if "QUALITA_KO" in response.text:
-                            st.warning("Foto non chiara. Prova ad avvicinarti o ad aumentare la luce.")
-                        else:
+                        try:
+                            # Carichiamo l'immagine
+                            image = Image.open(input_finale)
+                            
+                            # Definiamo il prompt per Gemini
+                            prompt = f"""
+                            Agisci come un esperto nutrizionista per diabetici. 
+                            Paziente: {u['nome']}, Rapporto IC: {u['ic']}.
+                            Analizza l'immagine:
+                            1. Identifica gli alimenti (es. Peperoni grigliati).
+                            2. Stima i carboidrati (CHO) totali.
+                            3. Se la foto è illeggibile, scrivi chiaramente che la qualità è bassa.
+                            4. Calcola il bolo suggerito: (CHO totali / {u['ic']}).
+                            """
+                            
+                            # CHIAMATA AL MODELLO (Uso il nome completo del modello per evitare il NotFound)
+                            # Proviamo con 'gemini-1.5-flash', se fallisce darà un errore specifico
+                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            
+                            response = model.generate_content([prompt, image])
+                            
+                            # Visualizzazione del risultato
                             st.markdown("### 📊 Risultato Analisi")
                             st.markdown(response.text)
-                            st.caption("Nota: verifica sempre i dati prima di iniettare insulina.")
-
+                            
+                        except Exception as e:
+                            # Se c'è un errore, lo catturiamo e lo spieghiamo
+                            errore_str = str(e)
+                            if "404" in errore_str or "not found" in errore_str.lower():
+                                st.error("❌ Errore: Il modello 'gemini-1.5-flash' non è stato trovato. Prova a scrivere 'models/gemini-1.5-flash' nel codice.")
+                            elif "API_KEY_INVALID" in errore_str:
+                                st.error("❌ Errore: La tua API Key non è valida. Controllala in Google AI Studio.")
+                            else:
+                                st.error(f"❌ Si è verificato un errore inaspettato: {errore_str}")
