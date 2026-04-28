@@ -9,7 +9,7 @@ st.title("🥗 Conta Carboidrati con Gemini")
 st.write("Carica la foto del tuo piatto per una stima dei carboidrati (CHO).")
 
 # Recupero API Key (da impostare nei Secrets di Streamlit/GitHub)
-api_key = st.sidebar.text_input("Inserisci la tua Gemini API Key", type="password")
+api_key = AIzaSyBZQjSbU_e8RidjOpOjSAchnwM8XBvG-lQ
 
 if api_key:
     genai.configure(api_key=api_key)
