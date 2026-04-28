@@ -1,54 +1,45 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
-import os
 
-# Configurazione della pagina Streamlit
-st.set_page_config(page_title="Diabete-IA Helper", layout="wide")
-st.title("🥗 Diabetes Assistant")
-st.write("Carica la foto del tuo piatto per una stima dei carboidrati (CHO).")
+# --- CONFIGURAZIONE ---
+st.set_page_config(page_title="AI Bolus Helper", layout="centered")
 
-# Recupero API Key (da impostare nei Secrets di Streamlit/GitHub)
-api_key = st.secrets.get("API_KEY", "")
+# Inizializziamo lo stato della camera se non esiste
+if 'camera_attiva' not in st.session_state:
+    st.session_state.camera_attiva = False
 
-if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+# --- SIDEBAR PER API KEY ---
+with st.sidebar:
+    api_key = st.text_input("Gemini API Key", type="password")
+    if api_key:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
-    # Sostituiamo st.file_uploader con st.camera_input
-    foto_piatto = st.camera_input("Inquadra il tuo piatto e scatta!")
-    
-    if foto_piatto is not None:
-        # Convertiamo l'immagine per PIL (necessario per Gemini)
+st.title("🥗 Calcolo CHO Istantaneo")
+
+# --- LOGICA DEL PULSANTE ---
+if not st.session_state.camera_attiva:
+    # Se la camera è spenta, mostra il pulsante per attivarla
+    if st.button("📸 Apri Fotocamera", use_container_width=True):
+        st.session_state.camera_attiva = True
+        st.rerun() # Ricarica la pagina per mostrare la camera
+else:
+    # Se la camera è attiva, mostra il widget e un tasto per chiuderla
+    if st.button("❌ Chiudi Fotocamera"):
+        st.session_state.camera_attiva = False
+        st.rerun()
+
+    foto_piatto = st.camera_input("Inquadra il cibo")
+
+    if foto_piatto:
         image = Image.open(foto_piatto)
         
-        # Mostriamo un'anteprima (opzionale, st.camera_input la mostra già)
-        # st.image(image, caption='Analisi in corso...')
-    
-        if st.button('Calcola Carboidrati'):
-            with st.spinner('Gemini sta analizzando le porzioni...'):
-                # Invia l'immagine catturata dalla camera al modello
-                response = model.generate_content([prompt, image])
-                st.markdown("### 📊 Stima Nutrizionale")
-                st.write(response.text)
-        
-        if st.button('Analizza Carboidrati'):
-            # Il Prompt strategico
-            prompt = """
-            Sei un assistente nutrizionale esperto in diabete tipo 1. 
-            Analizza l'immagine e:
-            1. Identifica gli alimenti.
-            2. Stima il peso di ogni porzione.
-            3. Calcola i grammi di carboidrati.
-            4. Fornisci un totale finale.
-            Sii prudente e avvisa se ci sono ingredienti incerti.
-            """
-            
-            with st.spinner('Analisi in corso...'):
-                response = model.generate_content([prompt, image])
-                st.subheader("Risultato Stima:")
-                st.write(response.text)
-                
-                st.warning("⚠️ ATTENZIONE: Questa è una stima automatica. Verifica sempre i valori prima di calcolare il bolo.")
-else:
-    st.info("Inserisci l'API Key nella barra laterale per iniziare.")
+        if st.button('🚀 Analizza Piatto', use_container_width=True):
+            if not api_key:
+                st.error("Inserisci l'API Key nella sidebar!")
+            else:
+                with st.spinner('Gemini sta calcolando...'):
+                    prompt = "Analizza l'immagine, identifica gli alimenti e stima i grammi totali di carboidrati (CHO). Rispondi con una tabella e un totale finale."
+                    response = model.generate_content([prompt, image])
+                    st.markdown(response.text)
