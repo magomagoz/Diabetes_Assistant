@@ -61,7 +61,7 @@ if st.session_state.user_data is None:
             peso = st.number_input("Peso (kg)", min_value=10.0, value=70.0)
             altezza = st.number_input("Altezza (cm)", min_value=50, value=170)
         
-        rapporto_ic = st.number_input("Rapporto Insulina/Carboidrati (IC)", min_value=1.0, value=10.0, help="Quanti grammi di carboidrati copre 1 unità di insulina?")
+        rapporto_ic = st.number_input("Rapporto Insulina/Carboidrati (IC)", min_value=1.0, value=30.0, help="Quanti grammi di carboidrati copre 1 unità di insulina?")
         
         if st.form_submit_button("Salva Profilo e Inizia"):
             if nome:
