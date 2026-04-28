@@ -1,90 +1,102 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import json
+import os
 
-# --- CONFIGURAZIONE ---
-st.set_page_config(page_title="Diabete AI Assistant", layout="centered")
+# --- COSTANTI ---
+USER_DATA_FILE = "profilo_utente.json"
 
-# --- GESTIONE PERSISTENZA (PROFILO UTENTE) ---
-# Inizializziamo le variabili di stato se non esistono
+# --- FUNZIONI DI SERVIZIO PER IL SALVATAGGIO ---
+def salva_dati_locali(dati):
+    with open(USER_DATA_FILE, "w") as f:
+        json.dump(dati, f)
+
+def carica_dati_locali():
+    if os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, "r") as f:
+            return json.load(f)
+    return None
+
+# --- CONFIGURAZIONE PAGINA ---
+st.set_page_config(page_title="AI Bolus Helper", layout="centered")
+
+# Inizializzazione session_state caricando dal file (se esiste)
 if 'user_data' not in st.session_state:
-    st.session_state.user_data = None
+    st.session_state.user_data = carica_dati_locali()
 
-# --- FUNZIONE RESET ---
-def reset_profile():
-    st.session_state.user_data = None
-    st.rerun()
-
-# --- SIDEBAR PER API KEY ---
+# --- SIDEBAR ---
 with st.sidebar:
+    st.header("Configurazione")
     api_key = st.secrets.get("API_KEY", "")
     if api_key:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
     
     if st.session_state.user_data:
-        if st.button("🗑️ Reset Profilo / Cambia Utente"):
-            reset_profile()
+        if st.button("🗑️ Elimina Profilo"):
+            if os.path.exists(USER_DATA_FILE):
+                os.remove(USER_DATA_FILE)
+            st.session_state.user_data = None
+            st.rerun()
 
-# --- LOGICA SCHERMATE ---
-
-# SCHERMATA 1: REGISTRAZIONE (Se non c'è un utente)
+# --- SCHERMATA REGISTRAZIONE ---
 if st.session_state.user_data is None:
-    st.title("👋 Benvenuto! Crea il tuo profilo")
-    with st.form("registration_form"):
+    st.title("📝 Crea il tuo Profilo")
+    with st.form("form_registrazione"):
         nome = st.text_input("Nome")
         eta = st.number_input("Età", min_value=1, max_value=120)
         peso = st.number_input("Peso (kg)", min_value=10.0, step=0.1)
         altezza = st.number_input("Altezza (cm)", min_value=50, step=1)
         
-        submit = st.form_submit_input("Salva Profilo")
-        if submit and nome:
-            st.session_state.user_data = {"nome": nome, "eta": eta, "peso": peso, "altezza": altezza}
-            st.rerun()
+        # Tasto per salvare e scrivere su file
+        if st.form_submit_button("Salva Dati Permanente"):
+            if nome:
+                nuovi_dati = {"nome": nome, "eta": eta, "peso": peso, "altezza": altezza}
+                st.session_state.user_data = nuovi_dati
+                salva_dati_locali(nuovi_dati) # Scrittura su file JSON
+                st.success("Dati salvati correttamente!")
+                st.rerun()
+            else:
+                st.error("Per favore, inserisci almeno il nome.")
 
-# SCHERMATA 2: DASHBOARD (Se l'utente è loggato)
+# --- SCHERMATA PRINCIPALE ---
 else:
     u = st.session_state.user_data
-    st.title(f"Ciao, {u['nome']}! 😊")
+    st.title(f"Bentornato, {u['nome']}! 👋")
     
-    # Input Glicemia
-    glicemia = st.number_input("Inserisci la glicemia attuale (mg/dL)", min_value=20, max_value=600, step=1)
+    # Campo Glicemia
+    glicemia = st.number_input("Glicemia attuale (mg/dL)", min_value=20, max_value=600, value=100)
     
     st.divider()
     
-    # Sezione Foto
-    st.subheader("📸 Analisi del Pasto")
-    foto_piatto = st.camera_input("Scatta una foto al tuo piatto")
+    # Sezione Fotocamera
+    st.subheader("📸 Analisi Pasto")
+    foto = st.camera_input("Scatta una foto al piatto")
 
-    if foto_piatto:
-        image = Image.open(foto_piatto)
-        
-        if st.button('🚀 Analizza e Calcola Bolo', use_container_width=True):
+    if foto:
+        image = Image.open(foto)
+        if st.button('🚀 Calcola Carboidrati e Bolo', use_container_width=True):
             if not api_key:
-                st.error("Inserisci l'API Key nella sidebar per continuare.")
+                st.warning("Inserisci l'API Key nella barra laterale!")
             else:
-                with st.spinner('Analisi in corso...'):
-                    # Prompt avanzato che chiede anche un controllo qualità
+                with st.spinner('L\'intelligenza artificiale sta analizzando...'):
+                    # Prompt arricchito con i dati dell'utente
                     prompt = f"""
-                    Agisci come un esperto di nutrizione per diabetici. 
-                    L'utente è {u['nome']}, {u['eta']} anni, {u['peso']}kg. 
-                    La sua glicemia attuale è {glicemia} mg/dL.
+                    Agisci come assistente medico per diabetici di tipo 1.
+                    Dati Utente: {u['nome']}, {u['eta']} anni, {u['peso']}kg.
+                    Glicemia attuale: {glicemia} mg/dL.
                     
-                    1. Valuta la qualità della foto: se è troppo mossa, buia o se gli alimenti non sono identificabili, scrivi come prima riga 'ERRORE_QUALITA: ' seguita dal motivo.
-                    2. Se la foto è chiara, identifica gli alimenti e stima i grammi di carboidrati (CHO).
-                    3. Restituisci una tabella Markdown con: Alimento, Quantità stimata, CHO (g).
-                    4. Calcola il totale CHO.
-                    5. Se possibile, dai un consiglio rapido basato sulla glicemia inserita ({glicemia}).
+                    Analizza la foto:
+                    1. Se la foto è sfocata o poco chiara, scrivi: "QUALITÀ_INSUFFICIENTE: [motivo]".
+                    2. Altrimenti, elenca gli alimenti, stima le porzioni e i CHO totali.
+                    3. Suggerisci se è necessario un bolo correttivo basandoti sulla glicemia.
                     """
                     
                     response = model.generate_content([prompt, image])
-                    testo_risposta = response.text
                     
-                    if "ERRORE_QUALITA" in testo_risposta:
-                        st.warning("⚠️ La foto non è abbastanza chiara.")
-                        st.info(testo_risposta.replace("ERRORE_QUALITA:", ""))
-                        st.button("Riprova lo scatto")
+                    if "QUALITÀ_INSUFFICIENTE" in response.text:
+                        st.error("La foto non è chiara. Prova a scattare di nuovo con più luce o da un'altra angolazione.")
                     else:
-                        st.success("Analisi completata!")
-                        st.markdown(testo_risposta)
+                        st.markdown(response.text)
 
