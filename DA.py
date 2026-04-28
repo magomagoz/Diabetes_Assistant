@@ -15,11 +15,22 @@ if api_key:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
-    uploaded_file = st.file_uploader("Scegli un'immagine...", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Piatto analizzato', use_column_width=True)
+    # Sostituiamo st.file_uploader con st.camera_input
+    foto_piatto = st.camera_input("Inquadra il tuo piatto e scatta!")
+    
+    if foto_piatto is not None:
+        # Convertiamo l'immagine per PIL (necessario per Gemini)
+        image = Image.open(foto_piatto)
+        
+        # Mostriamo un'anteprima (opzionale, st.camera_input la mostra già)
+        # st.image(image, caption='Analisi in corso...')
+    
+        if st.button('Calcola Carboidrati'):
+            with st.spinner('Gemini sta analizzando le porzioni...'):
+                # Invia l'immagine catturata dalla camera al modello
+                response = model.generate_content([prompt, image])
+                st.markdown("### 📊 Stima Nutrizionale")
+                st.write(response.text)
         
         if st.button('Analizza Carboidrati'):
             # Il Prompt strategico
