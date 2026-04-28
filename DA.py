@@ -4,7 +4,7 @@ from PIL import Image
 import os
 
 # Configurazione della pagina Streamlit
-st.set_page_config(page_title="Diabete-IA Helper", layout="Wide")
+st.set_page_config(page_title="Diabete-IA Helper", layout="Centered")
 st.title("🥗 Diabetes Assistant")
 st.write("Carica la foto del tuo piatto per una stima dei carboidrati (CHO).")
 
