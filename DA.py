@@ -20,7 +20,7 @@ def carica_dati_locali():
     return None
 
 # --- CONFIGURAZIONE ---
-st.set_page_config(page_title="Diabete AI Helper", layout="centered", page_icon="💉")
+st.set_page_config(page_title="Diabete AI Helper", layout="wide", page_icon="💉")
 
 if 'user_data' not in st.session_state:
     st.session_state.user_data = carica_dati_locali()
@@ -34,7 +34,7 @@ with st.sidebar:
     api_key = st.secrets.get("API_KEY", "")
     if api_key:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
     
     st.divider()
     if st.session_state.user_data:
