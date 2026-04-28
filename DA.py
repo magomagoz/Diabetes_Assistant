@@ -108,7 +108,7 @@ else:
                         """
                         
                         # Chiamata al modello
-                        model = genai.GenerativeModel('gemini-2.5-flash')
+                        model = genai.GenerativeModel('gemini-2.0-flash')
                         response = model.generate_content([prompt, image])
                         
                         st.markdown("### 📊 Risultato Analisi")
