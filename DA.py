@@ -3,7 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 
 # --- CONFIGURAZIONE ---
-st.set_page_config(page_title="AI Bolus Helper", layout="centered")
+st.set_page_config(page_title="AI Bolus Helper", layout="wide")
 
 # Inizializziamo lo stato della camera se non esiste
 if 'camera_attiva' not in st.session_state:
@@ -11,7 +11,7 @@ if 'camera_attiva' not in st.session_state:
 
 # --- SIDEBAR PER API KEY ---
 with st.sidebar:
-    api_key = st.text_input("Gemini API Key", type="password")
+    api_key = st.secrets("Gemini API Key", type="password")
     if api_key:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
