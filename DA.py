@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime
 import pandas as pd
-#import plotly.express as px
+import plotly.express as px
 import plotly.graph_objects as go
 
 # Prova a importare le utils (assicurati che il file utils.py esista)
