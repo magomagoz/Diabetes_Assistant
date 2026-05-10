@@ -73,7 +73,7 @@ with st.sidebar:
 
 # --- 1. REGISTRAZIONE ---
 if st.session_state.user_data is None:
-    st.title("🥗 Benvenuto su AI Bolus")
+    #st.title("🥗 Benvenuto su AI Bolus")
     st.info("Inserisci i tuoi dati per iniziare. Verranno salvati solo sul tuo dispositivo.")
     
     with st.form("reg_form"):
