@@ -84,7 +84,7 @@ if st.session_state.user_data is None:
         eta = colA.number_input("Età", min_value=1, value=30)
         peso = colB.number_input("Peso (kg)", min_value=10.0, value=70.0, step=0.5)
         altezza = colA.number_input("Altezza (cm)", min_value=50, value=170)
-        basale = colB.number_input("Unità di Basale (es. Toujeo) che fai ora", min_value=1, value=32)
+        basale = colB.number_input("Unità di Basale (es. Toujeo) che fai ora", min_value=1, value=33)
         
         st.subheader("Parametri Diabete")
         conosco_ic = st.radio("Conosci i tuoi parametri (IC e ISF)?", ["Sì", "No (Calcolali per me dal peso)"])
@@ -114,11 +114,6 @@ if st.session_state.user_data is None:
 else:
     u = st.session_state.user_data
     st.title(f"Ciao {u.get('nome', 'Utente')}! 👋")
-    
-    # Input Glicemia
-    glicemia_attuale = st.number_input("Inserisci la Glicemia attuale (mg/dL)", min_value=20, max_value=600, value=100)
-    
-    st.write("---")
 
     # TABS
     tab_profilo, tab1, tab2, tab3 = st.tabs(["👤 **Profilo**", "📊 **Dashboard**", "🍽️ **Calcolatore Pasti**", "📈 **Analisi Trend**"])
@@ -188,6 +183,11 @@ else:
                 st.info(s)
                 
     with tab2:
+        
+        # Input Glicemia
+        glicemia_attuale = st.number_input("Inserisci la Glicemia attuale (mg/dL)", min_value=20, max_value=600, value=100)
+        
+        st.write("---")
 
         # Pulsante per Foto/Galleria gestito nativamente
         st.subheader("📸 Scatta o carica foto del piatto")
