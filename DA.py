@@ -119,48 +119,6 @@ else:
     glicemia_attuale = st.number_input("Inserisci la Glicemia attuale (mg/dL)", min_value=20, max_value=600, value=100)
     
     st.write("---")
-    
-    # Pulsante per Foto/Galleria gestito nativamente
-    st.subheader("📸 Scatta o carica foto del piatto")
-    input_finale = st.file_uploader("", type=["jpg", "jpeg", "png"])
-    
-    if input_finale:
-        image = Image.open(input_finale)
-        st.image(image, caption="Piatto da analizzare", use_column_width=True)
-        
-        if st.button("🚀 CALCOLA BOLO", use_container_width=True, type="primary"):
-            if not api_key:
-                st.error("⚠️ Manca l'API Key nella sidebar!")
-            else:
-                with st.spinner("Analisi nutrizionale in corso..."):
-                    try:
-                        prompt = f"""
-                        Agisci come un esperto nutrizionista per diabetici. 
-                        Paziente: {u.get('nome', 'Utente')}, Rapporto IC: {u.get('ic', 10.0):.1f}.
-                        Glicemia attuale: {glicemia_attuale} mg/dL.
-                        
-                        Analizza l'immagine:
-                        1. Identifica gli alimenti.
-                        2. Stima i carboidrati (CHO) totali.
-                        3. Se la foto è illeggibile, scrivi chiaramente che la qualità è bassa.
-                        4. Calcola il bolo per i pasti suggerito: (CHO totali / {u.get('ic', 10.0):.1f}).
-                        """
-                        
-                        model = genai.GenerativeModel('gemini-2.0-flash')
-                        response = model.generate_content([prompt, image])
-                        
-                        st.markdown("### 📊 Risultato Analisi")
-                        st.markdown(response.text)
-                        st.caption("Nota: verifica sempre i dati prima di iniettare insulina.")
-                        
-                    except Exception as e:
-                        errore_str = str(e)
-                        if "404" in errore_str or "not found" in errore_str.lower():
-                            st.error("❌ Errore: Il modello non è stato trovato. Controlla il nome del modello nel codice.")
-                        elif "API_KEY_INVALID" in errore_str:
-                            st.error("❌ Errore: La tua API Key non è valida. Controllala in Google AI Studio.")
-                        else:
-                            st.error(f"❌ Si è verificato un errore inaspettato: {errore_str}")
 
     # TABS
     tab_profilo, tab1, tab2, tab3 = st.tabs(["👤 **Profilo**", "📊 **Dashboard**", "🍽️ **Calcolatore Pasti**", "📈 **Analisi Trend**"])
@@ -230,6 +188,49 @@ else:
                 st.info(s)
                 
     with tab2:
+
+        # Pulsante per Foto/Galleria gestito nativamente
+        st.subheader("📸 Scatta o carica foto del piatto")
+        input_finale = st.file_uploader("", type=["jpg", "jpeg", "png"])
+        
+        if input_finale:
+            image = Image.open(input_finale)
+            st.image(image, caption="Piatto da analizzare", use_column_width=True)
+            
+            if st.button("🚀 CALCOLA BOLO", use_container_width=True, type="primary"):
+                if not api_key:
+                    st.error("⚠️ Manca l'API Key nella sidebar!")
+                else:
+                    with st.spinner("Analisi nutrizionale in corso..."):
+                        try:
+                            prompt = f"""
+                            Agisci come un esperto nutrizionista per diabetici. 
+                            Paziente: {u.get('nome', 'Utente')}, Rapporto IC: {u.get('ic', 10.0):.1f}.
+                            Glicemia attuale: {glicemia_attuale} mg/dL.
+                            
+                            Analizza l'immagine:
+                            1. Identifica gli alimenti.
+                            2. Stima i carboidrati (CHO) totali.
+                            3. Se la foto è illeggibile, scrivi chiaramente che la qualità è bassa.
+                            4. Calcola il bolo per i pasti suggerito: (CHO totali / {u.get('ic', 10.0):.1f}).
+                            """
+                            
+                            model = genai.GenerativeModel('gemini-2.0-flash')
+                            response = model.generate_content([prompt, image])
+                            
+                            st.markdown("### 📊 Risultato Analisi")
+                            st.markdown(response.text)
+                            st.caption("Nota: verifica sempre i dati prima di iniettare insulina.")
+                            
+                        except Exception as e:
+                            errore_str = str(e)
+                            if "404" in errore_str or "not found" in errore_str.lower():
+                                st.error("❌ Errore: Il modello non è stato trovato. Controlla il nome del modello nel codice.")
+                            elif "API_KEY_INVALID" in errore_str:
+                                st.error("❌ Errore: La tua API Key non è valida. Controllala in Google AI Studio.")
+                            else:
+                                st.error(f"❌ Si è verificato un errore inaspettato: {errore_str}")
+     
         st.subheader("🍽️ Calcolatore Insulina")
 
         # Recupera direttamente dal session state (eliminata ri-lettura JSON superflua)
