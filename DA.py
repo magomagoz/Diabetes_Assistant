@@ -55,7 +55,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-
 # --- SIDEBAR: CONFIGURAZIONE AI ---
 with st.sidebar:
     st.header("⚙️ Impostazioni")
